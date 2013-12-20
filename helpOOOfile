@@ -1,0 +1,347 @@
+REM  *****  BASIC  *****
+
+Sub Main1
+	Dim Doc As Object
+	Dim Sheet As Object
+	
+	Doc= StarDesktop.CurrentComponent
+	Sheet= Doc.Sheets(0)
+	If Doc.Sheets.hasByName("MySheet") Then
+	Sheet= Doc.Sheets.getByName("MySheet")
+	Else
+	Sheet= Doc.createInstance("com.sun.star.sheet.Spreadsheet")
+	Doc.Sheets.insertByName("MySheet", Sheet)
+	End If
+End Sub
+
+Sub Main
+	'Sub CopySpreadsheetRange
+  REM Get sheet 1, the original, and 2, which will contain the copy.
+  oSheet1 = ThisComponent.Sheets.getByIndex(0)
+  oSheet2 = ThisComponent.Sheets.getByIndex(1)
+
+  REM Get the range to copy and the rang to copy to.
+  oRangeOrg = oSheet1.getCellRangeByName("A1:C10").RangeAddress
+  oRangeCpy = oSheet2.getCellRangeByName("A1:C10").RangeAddress
+
+  REM The insert position
+  oCellCpy = oSheet2.getCellByPosition(oRangeCpy.StartColumn,_
+    oRangeCpy.StartRow).CellAddress
+
+  REM Do the copy
+  oSheet1.CopyRange(oCellCpy, oRangeOrg)
+'End Sub
+End Sub
+
+'******************************************************************
+'Author: Sasa Kelecevic 
+'email:  scat@teol.net 
+Sub ExampleGetValue
+  Dim oDoc As Object, oSheet As Object, oCell As Object
+  oDoc=ThisComponent
+  oSheet=oDoc.Sheets.getByIndex(0)
+  oCell=oSheet.getCellByposition(0,0) 'A1
+  Rem a cell's contents can have one of the three following types:
+  Print oCell.getValue()
+  'Print oCell.getString()
+  'Print oCell.getFormula()
+End Sub
+
+
+function SeekColomnSheetMarker() as Variant
+  	Dim oDoc As Object, oSheet As Object,oCellHor  As Object, oCellVert As Object
+  	dim strValueFromCell as string
+  	Dim strArray As Variant, intLastPoint as Integer
+  	intLastPoint = 0
+  	strArray = DimArray(100,2)
+  	oDoc=ThisComponent
+  	oSheet=oDoc.Sheets.getByIndex(0)
+	Dim nextHorizontalBound as Integer,nextVerticalBound as Integer
+	Dim i As Integer, j as integer
+	nextHorizontalBound=30
+	nextVerticalBound=30
+	
+	For i =0 to 30
+		oCellHor=oSheet.getCellByposition(i,0) 'A1 horizontal first row
+		strValueFromCell= oCellHor.getString()'.getValue()
+		if strValueFromCell="0" then
+			for j =0 to nextVerticalBound
+				'if i=0 then
+				'	continue
+				'end if
+				Dim strValueFromCell2 as String
+				strValueFromCell2 = ""
+				oCellVert = oSheet.getCellByposition(i,j) ' Vertical colomn appropriate to row
+				strValueFromCell2= oCellVert.getString()'.getValue()
+				if strValueFromCell2="0" then
+					MsgBox Str(strValueFromCell2)&"sell: "&Str(i)&"  "&Str(j)
+					strArray(intLastPoint,0)=i
+					strArray(intLastPoint,1)=j
+					'msgbox strArray(intLastPoint,0)
+					intLastPoint=intLastPoint+1
+					'Wider Vertical bound if i found something in this colomn
+					nextVerticalBound = nextVerticalBound+30
+					if intLastPoint >=99 then 
+						MsgBox "intLastPoint more then UpperBound of ARRAY"
+						Exit Function
+					end if 
+				end if
+			next j
+		end if
+	Next i
+	if intLastPoint =0 then
+		MsgBox "No Zeros in zero ROW and in their Colomns"
+		MsgBox "exit APPLICATION"
+	End if 
+	dim strToPrintOnly as string
+	strToPrintOnly=""
+	for k=0 to 30 
+		strToPrintOnly=strToPrintOnly+strArray(k,k)
+	next k
+	MsgBox strToPrintOnly
+	SeekColomnSheetMarker=strArray
+
+End function
+'end sub
+
+function DivideSelectedCells ()
+  Dim dDivisor As Double
+  Dim oSels
+	dim sheet
+	dim oSelection
+  'dDivisor = 10
+  
+  REM store the current selection
+  oSels = ThisComponent.CurrentSelection
+  sheet = ThisComponent.CurrentController.getActiveSheet()
+  oSelection = ThisComponent.getCurrentSelection()
+  oArea = oSelection.getRangeAddress()
+  frow = oArea.StartRow
+  lrow = oArea.EndRow
+  fcol = oArea.StartColumn
+  lcol = oArea.EndColumn
+  
+  'oSels = ThisComponent.getCurrentController().getSelection()
+  'DivideRegions(oSels)
+  '#get real range to extract data
+  ' oRange = sheet.getCellRangeByPosition(fcol, frow, lcol, lrow)
+  
+  ' #Extract cell contents as DataArray
+  ' data_tup = oRange.getDataArray()
+  DivideSelectedCells=oArea
+End function
+
+sub SeekNearestRightUp_Side()
+  'strArray=SeekColomnSheetMarker()
+  'oArea=DivideSelectedCells()
+  'frow = oArea.StartRow
+  'lrow = oArea.EndRow
+  'fcol = oArea.StartColumn
+  'lcol = oArea.EndColumn
+  'col=strArray(intLastPoint,0)
+  'row=strArray(intLastPoint,1)
+  'MsgBox "frow^"& Str(frow)& " lrow^" &Str(lrow)& "; fcol^"& Str(fcol)&" ;lcol^"&Str(lcol)
+  dim strArray as Variant
+  strArray = DimArray(4,2)
+  strArray(0,0) =12
+  strArray(0,1) =0
+  strArray(1,0) =12
+  strArray(1,1) =10
+  strArray(2,0) =18
+
+  strArray(2,1) =0
+  strArray(2,0) =18
+  strArray(2,1) =12
+  fcol=13
+  frow=9
+  bestCol=0
+  bestColMatch=0
+  bestRow=0
+  bestColDist=100
+  bestRowDist=100
+  bestColMatch=0
+  bestRowMatch=0
+  for k = 0 to ubound(strArray)
+		stirk =strArray(k,0)
+		kjkcol= fcol-stirk
+		kjkrow=frow-strArray(k,1)
+		if kjkcol>0 and kjkrow>0 then
+			MsgBox str(kjkcol)&" "& str(kjkrow)
+			if kjkcol<bestColDist then
+				MsgBox "Hellokjkl:"& Str(kjkl)&"; strArr(x,col)="&stirk
+				bestColDist=kjkcol
+				bestColMatch=strArray(k,0)
+				bestRowDist=kjkrow
+				bestRowMatch=strArray(k,1)
+			else
+				if  kjkcol=bestColDist and kjkrow<bestRowDist then
+					MsgBox "else kjkl:"& Str(kjkl)&"; strArr(x,col)="&stirk
+					bestRowDist=kjkrow
+					bestRowMatch=strArray(k,1)
+			 	end if
+				
+			end if
+		end if
+  next k
+  msgbox str(bestColMatch)&" "& str(bestRowMatch)
+  
+  'получить информацию о размере таблицы(x,y)
+  dim table_dimension
+  table_dimension = getArraySelectedDim()
+  
+end sub
+
+function getArraySelectedDim()
+	dim newArray
+	newArray=DimArray(2)
+	newArray(0)=5	'colomns
+	newArray(1)=6	'rows
+    getArraySelectedDim=newArray
+end function
+
+Sub DivideRegions(oSels)
+  Dim oSel
+  Dim i As Integer
+  dim selRenge
+  
+  selRange=oSels.getRangeAddresses()
+  If oSels.supportsService("com.sun.star.sheet.SheetCellRange") Then
+    DivideRange(oSels, dDivisor)
+  End If
+End Sub
+
+'Listing 414.Find cells that are not empty in a range.
+Function NonEmptyCellsInRange(oRange, sep$) As String
+Dim oCell  'The cell to use!
+Dim oRanges  'Ranges returned after querying for the cells
+Dim oAddrs()  'Array of CellRangeAddress
+Dim oAddr  'One CellRangeAddress
+Dim oSheet  'Sheet that contains the cell range
+Dim i As Long  'General index variable
+Dim nRow As Long  'Row number
+Dim nCol As Long  'Column number
+Dim s As String
+REM First, find the cells that are NOT empty in this range!
+REM I consider a cell to be not empty if it has a value,
+REM date/time, string, or formula.
+oRanges = oRange.queryContentCells(_
+com.sun.star.sheet.CellFlags.VALUE OR _
+com.sun.star.sheet.CellFlags.DATETIME OR _
+com.sun.star.sheet.CellFlags.STRING OR _
+com.sun.star.sheet.CellFlags.FORMULA)
+oAddrs() = oRanges.getRangeAddresses()
+For i = 0 To UBound(oAddrs())
+REM Get a specific address range
+oAddr = oAddrs(i)
+For nRow = oAddr.StartRow To oAddr.EndRow
+For nCol = oAddr.StartColumn To oAddr.EndColumn
+oCell = oRange.Spreadsheet.getCellByPosition(nCol, nRow)
+s = s & oCell.AbsoluteName & sep$
+Next
+Next
+Next
+NonEmptyCellsInRange = s
+End Function
+
+'Listing 414.Find cells that are not empty in a range.
+Function NonEmptyCellsInRange2(oRange, sep$) As String
+Dim oCell  'The cell to use!
+Dim oRanges  'Ranges returned after querying for the cells
+Dim oAddrs()  'Array of CellRangeAddress
+Dim oAddr  'One CellRangeAddress
+Dim oSheet  'Sheet that contains the cell range
+Dim i As Long  'General index variable
+Dim nRow As Long  'Row number
+Dim nCol As Long  'Column number
+Dim s As String
+REM First, find the cells that are NOT empty in this range!
+REM I consider a cell to be not empty if it has a value,
+REM date/time, string, or formula.
+oRanges = oRange.queryContentCells(_
+com.sun.star.sheet.CellFlags.VALUE OR _
+com.sun.star.sheet.CellFlags.DATETIME OR _
+com.sun.star.sheet.CellFlags.STRING OR _
+com.sun.star.sheet.CellFlags.FORMULA)
+oAddrs() = oRanges.getRangeAddresses()
+For i = 0 To UBound(oAddrs())
+REM Get a specific address range
+oAddr = oAddrs(i)
+For nRow = oAddr.StartRow To oAddr.EndRow
+For nCol = oAddr.StartColumn To oAddr.EndColumn
+oCell = oRange.Spreadsheet.getCellByPosition(nCol, nRow)
+s = s & oCell.AbsoluteName & sep$
+Next
+Next
+Next
+NonEmptyCellsInRange = s
+End Function
+
+'Listing 418.Enumerate rows in a range and find nonempty cells.
+Sub TraverseRows
+Dim oRange  'The primary range
+Dim oSheet  'The fourth sheet
+Dim oRows  'Rows object
+Dim oRow  'A single row
+Dim oRowEnum  'Enumerator for the rows
+Dim s As String  'General String Variable
+oSheet = ThisComponent.Sheets(3)
+oRange = oSheet.getCellRangeByName("B6:C9")
+REM I now want to find ALL of the cells that are NOT empty in the
+REM rows that are related to the range. Notice that I do not want to
+REM limit myself to cells in the range, but that I am interested in the
+REM rows.
+oRows  = oRange.getRows()
+REM Sure, I could access things by index, but you probably expected that!
+oRowEnum = oRows.createEnumeration()
+Do While oRowEnum.hasMoreElements()
+oRow = oRowEnum.nextElement()
+s = s & NonEmptyCellsInRange(oRow, " ") & CHR$(10)
+Loop
+MsgBox s, 0, "Non-Empty Cells In Rows"
+End Sub
+
+sub fillValuees()
+'Listing 422.Fill values from E11:N20 using fillSeries().
+oSheet = ThisComponent.Sheets(3)
+oRange = oSheet.getCellRangeByName("E11:N20")
+oRange.fillSeries(com.sun.star.sheet.FillDirection.TO_LEFT, _
+	com.sun.star.sheet.FillMode.LINEAR, _
+	com.sun.star.sheet.FillDateMode.FILL_DATE_DAY,2, 40000)
+end sub
+
+'Listing 419.Get and set data in a Calc sheet.
+Sub GetAndSetData
+Dim oRange  'The primary range
+Dim oSheet  'The fourth sheet
+Dim oAllData  'Array containing the data
+Dim s As String  'General string variable
+Dim i As Integer  'General index variable
+oSheet = ThisComponent.Sheets(3)
+oRange = oSheet.getCellRangeByName("B6:E8")
+REM Get the data contained in the range!
+REM Data from empty cells is included.
+oAllData = oRange.getDataArray()
+For i = 0 To UBound(oAllData)
+REM oAllData(i) is an array, so simply join the data together
+REM for a quick printing!
+s = s & "(" & Join(oAllData(i), ") (") & ")" & CHR$(10)
+Next
+MsgBox s, 0, "Data In Range"
+REM Now quickly set some data. 
+oRange = oSheet.getCellRangeByName("F1:G2")
+oRange.setDataArray(Array(Array(1, "One"), Array(2, "Two")))
+End Sub
+
+Sub mainForTesting ()
+	'AbsoluteName
+'getCells()	Return the collection of contained cells as an XEnumerationAccess
+'getRangeAddresses()	Return an array of services of type CellRangeAddress	Sheet startcol startrow endcol endrow
+
+	'SheetCellRange.	getRangeAddresses()
+	'getCellRangeByName(name)
+'	getCellRangeByPosition(left, top, right, bottom) 'Get a cell range within the range
+'	 getCellByPosition(left, top)
+	dim bullShit as Variant
+	bullShit=SeekColomnSheetMarker()
+	
+End Sub
